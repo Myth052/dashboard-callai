@@ -93,6 +93,18 @@
     .telegram-section small {
       margin: 5px 0;
     }
+
+    .mensaje-ok {
+      font-weight: bold;
+      font-size: 16px;
+      margin-top: 20px;
+      color: #27ae60;
+    }
+
+    #checkoutSection {
+      display: none;
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
@@ -104,7 +116,10 @@
       <div class="telegram-section" id="telegramSection">
         <p><strong>Para poder hacer Check In:</strong></p>
         <small>Pide tu "Chat ID" a través de nuestro chat de Telegram para escribirlo en la siguiente sección.</small>
-        <small>Si aún no tienes un chat con nosotros, entra a <a href="https://t.me/CallAI_hoteleria_bot" target="_blank">t.me/CallAI_hoteleria_bot</a> y escribe <code>/start</code>. Una vez que lo hayas hecho, pide tu "Chat ID".</small>
+        <small>Si aún no tienes un chat con nosotros, entra a 
+          <a href="https://t.me/CallAI_hoteleria_bot" target="_blank">t.me/CallAI_hoteleria_bot</a> 
+          y escribe <code>/start</code>. Una vez que lo hayas hecho, pide tu "Chat ID".
+        </small>
 
         <div class="form-group">
           <input type="text" id="usuario" placeholder="Chat ID. Ej: 12345678" />
@@ -112,10 +127,28 @@
         </div>
       </div>
 
+      <div id="mensajeListo" class="mensaje-ok" style="display: none;">
+        ¡Listo! Ya puedes hacer check-in.
+      </div>
+
       <div class="buttons">
         <button id="checkinBtn" onclick="handleAccion('checkin')" disabled>Check-in</button>
         <button id="checkoutBtn" onclick="handleAccion('checkout')" disabled>Check-out</button>
       </div>
+
+      <!-- Sección para Check-Out -->
+      <div id="checkoutSection">
+        <p><strong>Para poder hacer Check Out, ingresa tu Chat ID en la siguiente sección:</strong></p>
+        <div class="form-group">
+          <input type="text" id="usuarioCheckout" placeholder="Chat ID. Ej: 12345678" />
+          <button onclick="habilitarCheckOut()">Aceptar</button>
+        </div>
+      </div>
+
+      <div id="mensajeListoCheckout" class="mensaje-ok" style="display: none;">
+        ¡Listo! Ya puedes hacer check-out.
+      </div>
+
     </header>
   </div>
 
@@ -124,13 +157,6 @@
     const WEBHOOK_CHECKOUT = "https://callai-tech.app.n8n.cloud/webhook/35d4c8ea-ae56-4899-9623-6b6b3d02adb7";
 
     let usuario = "";
-
-    // Redirecciona automáticamente si ya se hizo check-in antes
-    window.onload = () => {
-      if (localStorage.getItem("checkinRealizado") === "true") {
-        window.location.href = "checkout.html";
-      }
-    };
 
     function habilitarCheckIn() {
       const input = document.getElementById('usuario').value.trim();
@@ -141,8 +167,11 @@
       usuario = input;
 
       document.getElementById('telegramSection').style.display = 'none';
-      document.getElementById('checkinBtn').disabled = false;
-      document.getElementById('checkinBtn').style.backgroundColor = '#2ecc71';
+      document.getElementById('mensajeListo').style.display = 'block';
+
+      const btn = document.getElementById('checkinBtn');
+      btn.disabled = false;
+      btn.style.backgroundColor = '#2ecc71';
     }
 
     async function handleAccion(accion) {
@@ -163,13 +192,26 @@
 
         if (respuesta.ok) {
           if (accion === "checkin") {
-            localStorage.setItem("checkinRealizado", "true");
-            alert("✅ Check-in realizado. Redirigiendo a la página de check-out...");
-            window.location.href = "checkout.html";
+            document.getElementById('mensajeListo').style.display = 'none';
+            document.getElementById('checkinBtn').disabled = true;
+            document.getElementById('checkinBtn').style.backgroundColor = "grey";
+            mostrarSeccionCheckout();
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            checkoutBtn.disabled = true;
+            checkoutBtn.style.backgroundColor = "grey";
           } else {
-            alert("✅ ¡Check-out realizado con éxito!");
-            localStorage.removeItem("checkinRealizado");
-            location.reload();
+            alert("✅ ¡Check Out realizado con éxito!");
+            usuario = "";
+            document.getElementById('usuario').value = "";
+            document.getElementById('usuarioCheckout').value = "";
+            document.getElementById('telegramSection').style.display = 'block';
+            document.getElementById('mensajeListo').style.display = 'none';
+            document.getElementById('checkoutSection').style.display = 'none';
+            document.getElementById('mensajeListoCheckout').style.display = 'none';
+            document.getElementById('checkinBtn').disabled = true;
+            document.getElementById('checkinBtn').style.backgroundColor = "grey";
+            document.getElementById('checkoutBtn').disabled = true;
+            document.getElementById('checkoutBtn').style.backgroundColor = "grey";
           }
         } else {
           alert("❌ Error al enviar la acción.");
@@ -179,6 +221,26 @@
         alert("⚠️ Error de conexión con el webhook.");
         console.error(error);
       }
+    }
+
+    function mostrarSeccionCheckout() {
+      document.getElementById('checkoutSection').style.display = 'block';
+    }
+
+    function habilitarCheckOut() {
+      const input = document.getElementById('usuarioCheckout').value.trim();
+      if (!input) {
+        alert("Por favor ingresa tu Chat ID para hacer Check Out.");
+        return;
+      }
+
+      usuario = input;
+      document.getElementById('checkoutSection').style.display = 'none';
+      document.getElementById('mensajeListoCheckout').style.display = 'block';
+
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      checkoutBtn.disabled = false;
+      checkoutBtn.style.backgroundColor = "#e74c3c";
     }
   </script>
 </body>
