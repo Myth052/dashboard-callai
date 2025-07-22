@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hoteles CallAI</title>
+  <link rel="icon" href="logo_black.jpg" type="image/jpeg">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url("https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80");
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .App {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .App-header {
+      background-color: rgba(255, 255, 255, 0.85);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .logo {
+      width: 100px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input {
+      padding: 12px;
+      font-size: 16px;
+      width: 300px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: none;
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .buttons button {
+      padding: 15px 30px;
+      font-size: 16px;
+      border-radius: 10px;
+    }
+
+    .buttons button:disabled {
+      background-color: #cccccc;
+      color: #666666;
+      cursor: not-allowed;
+    }
+
+    .telegram-section p,
+    .telegram-section small {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="App">
+    <header class="App-header">
+      <img src="logo_black.jpg" alt="Logo Call AI" class="logo" />
+      <h2>Hoteles Argentina</h2>
+
+      <div class="telegram-section" id="telegramSection">
+        <p><strong>Para poder hacer Check In:</strong></p>
+        <small>Pide tu "Chat ID" a través de nuestro chat de Telegram para escribirlo en la siguiente sección.</small>
+        <small>Si aún no tienes un chat con nosotros, entra a <a href="https://t.me/CallAI_hoteleria_bot" target="_blank">t.me/CallAI_hoteleria_bot</a> y escribe <code>/start</code>. Una vez que lo hayas hecho, pide tu "Chat ID".</small>
+
+        <div class="form-group">
+          <input type="text" id="usuario" placeholder="Chat ID. Ej: 12345678" />
+          <button onclick="habilitarCheckIn()">Aceptar</button>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button id="checkinBtn" onclick="handleAccion('checkin')" disabled>Check-in</button>
+        <button id="checkoutBtn" onclick="handleAccion('checkout')" disabled>Check-out</button>
+      </div>
+    </header>
+  </div>
+
+  <script>
+    const WEBHOOK_CHECKIN = "https://callai-tech.app.n8n.cloud/webhook/539be5f7-b2d8-48a6-bd87-6ac7e5d1e29e";
+    const WEBHOOK_CHECKOUT = "https://callai-tech.app.n8n.cloud/webhook/35d4c8ea-ae56-4899-9623-6b6b3d02adb7";
+
+    let usuario = "";
+
+    // Redirecciona automáticamente si ya se hizo check-in antes
+    window.onload = () => {
+      if (localStorage.getItem("checkinRealizado") === "true") {
+        window.location.href = "checkout.html";
+      }
+    };
+
+    function habilitarCheckIn() {
+      const input = document.getElementById('usuario').value.trim();
+      if (!input) {
+        alert("Por favor escribe tu Chat ID de Telegram.");
+        return;
+      }
+      usuario = input;
+
+      document.getElementById('telegramSection').style.display = 'none';
+      document.getElementById('checkinBtn').disabled = false;
+      document.getElementById('checkinBtn').style.backgroundColor = '#2ecc71';
+    }
+
+    async function handleAccion(accion) {
+      const url = accion === "checkin" ? WEBHOOK_CHECKIN : WEBHOOK_CHECKOUT;
+
+      try {
+        const respuesta = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            usuario: usuario || "sin_usuario",
+            accion: accion,
+            fecha: new Date().toISOString(),
+          }),
+        });
+
+        if (respuesta.ok) {
+          if (accion === "checkin") {
+            localStorage.setItem("checkinRealizado", "true");
+            alert("✅ Check-in realizado. Redirigiendo a la página de check-out...");
+            window.location.href = "checkout.html";
+          } else {
+            alert("✅ ¡Check-out realizado con éxito!");
+            localStorage.removeItem("checkinRealizado");
+            location.reload();
+          }
+        } else {
+          alert("❌ Error al enviar la acción.");
+        }
+
+      } catch (error) {
+        alert("⚠️ Error de conexión con el webhook.");
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
